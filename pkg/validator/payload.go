@@ -12,7 +12,7 @@ import (
 
 var mapHelepr = map[string]string{
 	"required":   "is a required field",
-	"email":      "is not a valid email address",
+	"email":      "invalid email format",
 	"lowercase":  "must contain at least one lowercase letter",
 	"uppercase":  "must contain at least one uppercase letter",
 	"numeric":    "must contain at least one digit",

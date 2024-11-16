@@ -4,7 +4,6 @@ import "github.com/google/uuid"
 
 type User struct {
 	Id       uuid.UUID `json:"id"`
-	FullName string    `json:"full_name"`
 	Role     string    `json:"role"`
 	Username string    `json:"username"`
 	Email    string    `json:"email"`
@@ -12,7 +11,6 @@ type User struct {
 }
 
 type CreateUser struct {
-	FullName string `json:"full_name" validate:"required"`
 	Role     string `json:"role" validate:"required"`
 	Username string `json:"username" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
@@ -27,7 +25,6 @@ type UserFilter struct {
 
 type UpdateUser struct {
 	Id       uuid.UUID `json:"-"`
-	FullName string    `json:"full_name" validate:"required"`
 	Role     string    `json:"role" validate:"required"`
 	Username string    `json:"username" validate:"required"`
 	Email    string    `json:"email" validate:"required,email"`

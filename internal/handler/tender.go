@@ -13,7 +13,8 @@ import (
 )
 
 type createResponse struct {
-	Id uuid.UUID `json:"id"`
+	Id    uuid.UUID `json:"id"`
+	Title string    `json:"title"`
 }
 
 // @Description Create Tender
@@ -24,7 +25,7 @@ type createResponse struct {
 // @Param create body models.CreateTender true "Create tender"
 // @Success 200 {object} createResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /api/tenders [post]
+// @Router /api/client/tenders [post]
 // @Security ApiKeyAuth
 func (h *Handler) createTender(c *gin.Context) {
 	var body models.CreateTender
@@ -47,7 +48,7 @@ func (h *Handler) createTender(c *gin.Context) {
 	body.ClientId = userInfo.Id
 
 	if err := validator.ValidatePayloads(body); err != nil {
-		errorResponse(c, http.StatusBadRequest, err)
+		errorResponse(c, http.StatusBadRequest, errors.New("error: Invalid input"))
 		return
 	}
 
@@ -57,14 +58,10 @@ func (h *Handler) createTender(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createResponse{
-		Id: tenderId,
+	c.JSON(http.StatusCreated, createResponse{
+		Id:    tenderId,
+		Title: body.Title,
 	})
-}
-
-type getTendersResponse struct {
-	Tenders    []models.Tender   `json:"data"`
-	Pagination models.Pagination `json:"pagination"`
 }
 
 // @Description Get Tenders
@@ -75,9 +72,9 @@ type getTendersResponse struct {
 // @Param limit query int64 true "limit" default(10)
 // @Param page  query int64 true "page" default(1)
 // @Param search  query string false "search"
-// @Success 200 {object} getTendersResponse
+// @Success 201 {object} []models.Tender
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /api/tenders [get]
+// @Router /api/client/tenders [get]
 // @Security ApiKeyAuth
 func (h *Handler) getTenders(c *gin.Context) {
 	pagination, err := listPagination(c)
@@ -105,10 +102,7 @@ func (h *Handler) getTenders(c *gin.Context) {
 	pageCount := math.Ceil(float64(pagination.TotalCount) / float64(pagination.Limit))
 	pagination.PageCount = int(pageCount)
 
-	c.JSON(http.StatusOK, getTendersResponse{
-		Tenders:    tenders,
-		Pagination: pagination,
-	})
+	c.JSON(http.StatusOK, tenders)
 }
 
 // @Description Get Tender
@@ -119,7 +113,7 @@ func (h *Handler) getTenders(c *gin.Context) {
 // @Param id path string true "tender id"
 // @Success 200 {object} models.Tender
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /api/tenders/{id} [get]
+// @Router /api/client/tenders/{id} [get]
 // @Security ApiKeyAuth
 func (h *Handler) getTender(c *gin.Context) {
 	id, err := getUUIDParam(c, "id")
@@ -137,6 +131,10 @@ func (h *Handler) getTender(c *gin.Context) {
 	c.JSON(http.StatusOK, tender)
 }
 
+type updateTenderStatusResponse struct {
+	Message string `json:"message"`
+}
+
 // @Description Update Tender
 // @Summary Update Tender
 // @Tags Tender
@@ -146,12 +144,12 @@ func (h *Handler) getTender(c *gin.Context) {
 // @Param update body models.UpdateTender true "update tender"
 // @Success 200 {object} createResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /api/tenders/{id} [put]
+// @Router /api/client/tenders/{id} [put]
 // @Security ApiKeyAuth
-func (h *Handler) updateTender(c *gin.Context) {
+func (h *Handler) updateTenderStatus(c *gin.Context) {
 	id, err := getUUIDParam(c, "id")
 	if err != nil {
-		errorResponse(c, http.StatusBadRequest, err)
+		errorResponse(c, http.StatusNotFound, errors.New("error: Tender not found"))
 		return
 	}
 
@@ -166,26 +164,25 @@ func (h *Handler) updateTender(c *gin.Context) {
 		return
 	}
 
-	var body models.UpdateTender
+	var body models.UpdateTenderStatus
 	if err = c.ShouldBindJSON(&body); err != nil {
 		errorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 	body.Id = id
-	body.ClientId = userInfo.Id
 
 	if err := validator.ValidatePayloads(body); err != nil {
 		errorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	if err = h.service.Tender.UpdateTender(body); err != nil {
+	if err = h.service.Tender.UpdateTenderStatus(body); err != nil {
 		fromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, createResponse{
-		Id: id,
+	c.JSON(http.StatusOK, updateTenderStatusResponse{
+		Message: "Tender status updated",
 	})
 }
 
@@ -202,7 +199,7 @@ func (h *Handler) updateTender(c *gin.Context) {
 func (h *Handler) deleteTender(c *gin.Context) {
 	id, err := getUUIDParam(c, "id")
 	if err != nil {
-		errorResponse(c, http.StatusBadRequest, err)
+		errorResponse(c, http.StatusNotFound, errors.New("error: Tender not found or access denied"))
 		return
 	}
 
@@ -213,7 +210,7 @@ func (h *Handler) deleteTender(c *gin.Context) {
 	}
 
 	if userInfo.Role != config.RoleClient {
-		errorResponse(c, http.StatusForbidden, errors.New("permission denied"))
+		errorResponse(c, http.StatusForbidden, errors.New("error: Tender not found or access denied"))
 		return
 	}
 
@@ -222,7 +219,7 @@ func (h *Handler) deleteTender(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createResponse{
-		Id: id,
+	c.JSON(http.StatusOK, updateTenderStatusResponse{
+		Message: "Tender deleted successfully",
 	})
 }

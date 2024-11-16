@@ -15,6 +15,7 @@ type Service struct {
 	User
 	Authorization
 	Tender
+	Bid
 }
 
 func NewService(repos *repository.Repository, storage *storage.Storage, cfg *config.Config, loggers *logger.Logger) *Service {
@@ -22,6 +23,7 @@ func NewService(repos *repository.Repository, storage *storage.Storage, cfg *con
 		Authorization: NewAuthService(repos, loggers, cfg),
 		User:          NewUserService(repos, loggers),
 		Tender:        NewTenderService(repos, loggers),
+		Bid:           NewBidService(repos, loggers),
 	}
 }
 
@@ -47,4 +49,14 @@ type Tender interface {
 	GetTender(id uuid.UUID) (models.Tender, error)
 	UpdateTender(request models.UpdateTender) error
 	DeleteTender(id uuid.UUID) error
+	UpdateTenderStatus(request models.UpdateTenderStatus) error
+}
+
+type Bid interface {
+	CreateBid(request models.CreateBid) (uuid.UUID, error)
+	GetBids(filter models.BidFilter) ([]models.Bid, int, error)
+	GetBid(id uuid.UUID) (models.Bid, error)
+	UpdateBid(request models.UpdateBid) error
+	DeleteContractorBid(contractorId, bidId uuid.UUID) error
+	AwardBid(clientId, tenderId, bidId uuid.UUID) error
 }

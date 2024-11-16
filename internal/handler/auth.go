@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"tender-bridge/internal/models"
 	"tender-bridge/pkg/validator"
@@ -9,8 +10,7 @@ import (
 )
 
 type authResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	Token string `json:"token"`
 }
 
 // @Description Register User
@@ -21,7 +21,7 @@ type authResponse struct {
 // @Param signup body models.Register true "Register"
 // @Success 200 {object} authResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /api/register [post]
+// @Router /register [post]
 func (h *Handler) register(c *gin.Context) {
 	var body models.Register
 
@@ -30,20 +30,24 @@ func (h *Handler) register(c *gin.Context) {
 		return
 	}
 
+	if body.Username == "" && body.Email == "" {
+		errorResponse(c, http.StatusBadRequest, errors.New("username or email cannot be empty"))
+		return
+	}
+
 	if err := validator.ValidatePayloads(body); err != nil {
 		errorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	accessToken, refreshToken, err := h.service.Authorization.Register(body)
+	accessToken, _, err := h.service.Authorization.Register(body)
 	if err != nil {
 		fromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, authResponse{
-		AccessToken:  accessToken.Token,
-		RefreshToken: refreshToken.Token,
+	c.JSON(http.StatusCreated, authResponse{
+		Token: accessToken.Token,
 	})
 }
 
@@ -56,7 +60,7 @@ func (h *Handler) register(c *gin.Context) {
 // @Param login body models.Login true "Login"
 // @Success 200 {object} authResponse
 // @Failure 400,404,500 {object} ErrorResponse
-// @Router /api/login [post]
+// @Router /login [post]
 func (h *Handler) login(c *gin.Context) {
 	var body models.Login
 
@@ -65,19 +69,23 @@ func (h *Handler) login(c *gin.Context) {
 		return
 	}
 
+	if body.Username == "" || body.Password == "" {
+		errorResponse(c, http.StatusBadRequest, errors.New("error: Username and password are required"))
+		return
+	}
+
 	if err := validator.ValidatePayloads(body); err != nil {
 		errorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	accessToken, refreshToken, err := h.service.Authorization.Login(body)
+	accessToken, _, err := h.service.Authorization.Login(body)
 	if err != nil {
 		fromError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, authResponse{
-		AccessToken:  accessToken.Token,
-		RefreshToken: refreshToken.Token,
+		Token: accessToken.Token,
 	})
 }

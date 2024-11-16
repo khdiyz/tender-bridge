@@ -6,24 +6,24 @@ definitions:
     type: object
   handler.authResponse:
     properties:
-      access_token:
-        type: string
-      refresh_token:
+      token:
         type: string
     type: object
   handler.createResponse:
     properties:
       id:
         type: string
+      title:
+        type: string
     type: object
-  handler.getTendersResponse:
+  models.CreateBid:
     properties:
-      data:
-        items:
-          $ref: '#/definitions/models.Tender'
-        type: array
-      pagination:
-        $ref: '#/definitions/models.Pagination'
+      comments:
+        type: string
+      delivery_time:
+        type: integer
+      price:
+        type: integer
     type: object
   models.CreateTender:
     properties:
@@ -37,6 +37,10 @@ definitions:
         type: string
       title:
         type: string
+    required:
+    - deadline
+    - description
+    - title
     type: object
   models.Login:
     properties:
@@ -48,24 +52,9 @@ definitions:
     - password
     - username
     type: object
-  models.Pagination:
-    properties:
-      limit:
-        default: 10
-        type: integer
-      page:
-        default: 1
-        type: integer
-      page_count:
-        type: integer
-      total_count:
-        type: integer
-    type: object
   models.Register:
     properties:
       email:
-        type: string
-      full_name:
         type: string
       password:
         type: string
@@ -75,7 +64,6 @@ definitions:
         type: string
     required:
     - email
-    - full_name
     - password
     - role
     - username
@@ -121,75 +109,7 @@ info:
   title: Tender Management System API
   version: "1.0"
 paths:
-  /api/login:
-    post:
-      consumes:
-      - application/json
-      description: Login User
-      parameters:
-      - description: Login
-        in: body
-        name: login
-        required: true
-        schema:
-          $ref: '#/definitions/models.Login'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.authResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      summary: Login User
-      tags:
-      - Auth
-  /api/register:
-    post:
-      consumes:
-      - application/json
-      description: Register User
-      parameters:
-      - description: Register
-        in: body
-        name: signup
-        required: true
-        schema:
-          $ref: '#/definitions/models.Register'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.authResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      summary: Register User
-      tags:
-      - Auth
-  /api/tenders:
+  /api/client/tenders:
     get:
       consumes:
       - application/json
@@ -214,10 +134,12 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/handler.getTendersResponse'
+            items:
+              $ref: '#/definitions/models.Tender'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -274,45 +196,7 @@ paths:
       summary: Create Tender
       tags:
       - Tender
-  /api/tenders/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete Tender
-      parameters:
-      - description: tender id
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.createResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete Tender
-      tags:
-      - Tender
+  /api/client/tenders/{id}:
     get:
       consumes:
       - application/json
@@ -395,6 +279,158 @@ paths:
       summary: Update Tender
       tags:
       - Tender
+  /api/contractor/tenders/{id}/bid:
+    post:
+      consumes:
+      - application/json
+      description: Create Bid
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Create bid
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateBid'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Bid
+      tags:
+      - Bid
+  /api/tenders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Tender
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Tender
+      tags:
+      - Tender
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login User
+      parameters:
+      - description: Login
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Login User
+      tags:
+      - Auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register User
+      parameters:
+      - description: Register
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/models.Register'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Register User
+      tags:
+      - Auth
 securityDefinitions:
   ApiKeyAuth:
     in: header

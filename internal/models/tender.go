@@ -19,9 +19,9 @@ type Tender struct {
 
 type CreateTender struct {
 	ClientId    uuid.UUID `json:"-"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Deadline    time.Time `json:"deadline"`
+	Title       string    `json:"title" validate:"required"`
+	Description string    `json:"description" validate:"required"`
+	Deadline    string    `json:"deadline" validate:"required"`
 	Budget      int64     `json:"budget"`
 	File        string    `json:"file"`
 	Status      string    `json:"-"`
@@ -36,6 +36,11 @@ type UpdateTender struct {
 	Budget      int64     `json:"budget"`
 	File        string    `json:"file"`
 	Status      string    `json:"status"`
+}
+
+type UpdateTenderStatus struct {
+	Id     uuid.UUID `json:"-"`
+	Status string    `json:"status"`
 }
 
 type TenderFilter struct {

@@ -18,4 +18,8 @@ const (
 	TenderStatusOpen    = "open"
 	TenderStatusClosed  = "closed"
 	TenderStatusAwarded = "awarded"
+
+	BidStatusPending = "pending"
+	BidStatusAwarded = "awarded"
+	BidStatusClosed  = "closed"
 )

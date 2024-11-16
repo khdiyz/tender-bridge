@@ -11,41 +11,39 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type tenderRepo struct {
+type bidRepo struct {
 	db     *sqlx.DB
 	logger *logger.Logger
 }
 
-func NewTenderRepo(db *sqlx.DB, logger *logger.Logger) *tenderRepo {
-	return &tenderRepo{
+func NewBidRepo(db *sqlx.DB, logger *logger.Logger) *bidRepo {
+	return &bidRepo{
 		db:     db,
 		logger: logger,
 	}
 }
 
-func (r *tenderRepo) Create(request models.CreateTender) (uuid.UUID, error) {
+func (r *bidRepo) Create(request models.CreateBid) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query := `
-	INSERT INTO tenders (
+	INSERT INTO bids (
 		id,
-		client_id,
-		title,
-		description,
-		deadline,
-		budget,
-		file,
+		contractor_id,
+		tender_id,
+		price,
+		delivery_time,
+		comment,
 		status
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
+	) VALUES ($1, $2, $3, $4, $5, $6, $7);`
 
 	if _, err := r.db.Exec(query,
 		id,
-		request.ClientId,
-		request.Title,
-		request.Description,
-		request.Deadline,
-		request.Budget,
-		request.File,
+		request.ContractorId,
+		request.TenderId,
+		request.Price,
+		request.DeliveryTime,
+		request.Comment,
 		request.Status,
 	); err != nil {
 		r.logger.Error(err)
@@ -55,20 +53,19 @@ func (r *tenderRepo) Create(request models.CreateTender) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, error) {
+func (r *bidRepo) GetList(filter models.BidFilter) ([]models.Bid, int, error) {
 	baseQuery := `
 	SELECT 
 		id, 
-		client_id,
-		title,
-		description,
-		deadline,
-		budget,
-		file,
-		status 
-	FROM tenders WHERE TRUE `
+		contractor_id,
+		tender_id,
+		price,
+		delivery_time,
+		comment,
+		status
+	FROM bids WHERE TRUE `
 
-	countQuery := `SELECT COUNT(*) FROM tenders WHERE TRUE `
+	countQuery := `SELECT COUNT(*) FROM bids WHERE TRUE `
 
 	conditions := []string{}
 
@@ -79,8 +76,28 @@ func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, 
 
 	// Add search condition
 	if filter.Search != "" {
-		conditions = append(conditions, "(title || description) ILIKE :search")
+		conditions = append(conditions, "comment ILIKE :search")
 		params["search"] = "%" + filter.Search + "%"
+	}
+
+	if filter.FromPrice > 0 {
+		conditions = append(conditions, "price >= :from_price")
+		params["from_price"] = filter.FromPrice
+	}
+
+	if filter.ToPrice > 0 {
+		conditions = append(conditions, "price <= :to_price")
+		params["to_price"] = filter.FromPrice
+	}
+
+	if filter.TenderId != uuid.Nil {
+		conditions = append(conditions, "tender_id = :tender_id")
+		params["tender_id"] = filter.TenderId
+	}
+
+	if filter.ContractorId != uuid.Nil {
+		conditions = append(conditions, "contractor_id = :contractor_id")
+		params["contractor_id"] = filter.ContractorId
 	}
 
 	// Add WHERE clause if conditions exist
@@ -94,7 +111,7 @@ func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, 
 	baseQuery += " LIMIT :limit OFFSET :offset"
 
 	// Execute the main query
-	tenders := []models.Tender{}
+	bids := []models.Bid{}
 	rows, err := r.db.NamedQuery(baseQuery, params)
 	if err != nil {
 		r.logger.Error(err)
@@ -103,21 +120,20 @@ func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var tender models.Tender
+		var bid models.Bid
 		if err := rows.Scan(
-			&tender.Id,
-			&tender.ClientId,
-			&tender.Title,
-			&tender.Description,
-			&tender.Deadline,
-			&tender.Budget,
-			&tender.File,
-			&tender.Status,
+			&bid.Id,
+			&bid.ContractorId,
+			&bid.TenderId,
+			&bid.Price,
+			&bid.DeliveryTime,
+			&bid.Comment,
+			&bid.Status,
 		); err != nil {
 			r.logger.Error(err)
 			return nil, 0, err
 		}
-		tenders = append(tenders, tender)
+		bids = append(bids, bid)
 	}
 
 	// Execute the count query
@@ -134,66 +150,62 @@ func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, 
 		return nil, 0, err
 	}
 
-	return tenders, total, nil
+	return bids, total, nil
 }
 
-func (r *tenderRepo) GetById(id uuid.UUID) (models.Tender, error) {
-	var tender models.Tender
+func (r *bidRepo) GetById(id uuid.UUID) (models.Bid, error) {
+	var bid models.Bid
 
 	query := `
 	SELECT 
 		id, 
-		client_id,
-		title,
-		description,
-		deadline,
-		budget,
-		file,
-		status 
-	FROM tenders WHERE id = $1;`
+		contractor_id,
+		tender_id,
+		price,
+		delivery_time,
+		comment,
+		status
+	FROM bids WHERE id = $1;`
 
 	if err := r.db.QueryRow(query, id).Scan(
-		&tender.Id,
-		&tender.ClientId,
-		&tender.Title,
-		&tender.Description,
-		&tender.Deadline,
-		&tender.Budget,
-		&tender.File,
-		&tender.Status,
+		&bid.Id,
+		&bid.ContractorId,
+		&bid.TenderId,
+		&bid.Price,
+		&bid.DeliveryTime,
+		&bid.Comment,
+		&bid.Status,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.Tender{}, err
+			return models.Bid{}, err
 		}
 		r.logger.Error(err)
-		return models.Tender{}, err
+		return models.Bid{}, err
 	}
 
-	return tender, nil
+	return bid, nil
 }
 
-func (r *tenderRepo) Update(request models.UpdateTender) error {
+func (r *bidRepo) Update(request models.UpdateBid) error {
 	query := `
-	UPDATE tenders
+	UPDATE bids
 	SET
-		client_id = $2,
-		title = $3,
-		description = $4,
-		deadline = $5,
-		budget = $6,
-		file = $7,
-		status = $8
+		contractor_id = $2,
+		tender_id = $3,
+		price = $4,
+		delivery_time = $5,
+		comment = $6,
+		status = $7
 	WHERE id = $1;`
 
 	// Execute the query
 	row, err := r.db.Exec(query,
 		request.Id,
-		request.ClientId,
-		request.Title,
-		request.Description,
-		request.Deadline,
-		request.Budget,
-		request.File,
+		request.ContractorId,
+		request.TenderId,
+		request.Price,
+		request.DeliveryTime,
+		request.Comment,
 		request.Status,
 	)
 	if err != nil {
@@ -214,8 +226,8 @@ func (r *tenderRepo) Update(request models.UpdateTender) error {
 	return nil
 }
 
-func (r *tenderRepo) Delete(id uuid.UUID) error {
-	query := `DELETE FROM tenders WHERE id = $1;`
+func (r *bidRepo) Delete(id uuid.UUID) error {
+	query := `DELETE FROM bids WHERE id = $1;`
 
 	// Execute the query
 	row, err := r.db.Exec(query, id)

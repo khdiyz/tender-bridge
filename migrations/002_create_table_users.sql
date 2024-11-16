@@ -1,7 +1,6 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS "users"(
     "id" UUID PRIMARY KEY,
-    "full_name" VARCHAR(64) NOT NULL,
     "role" VARCHAR(64) NOT NULL,
     "username" VARCHAR(64) NOT NULL,
     "email" VARCHAR(64) NOT NULL,

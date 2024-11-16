@@ -18,7 +18,7 @@ const (
 func (h *Handler) userIdentity(c *gin.Context) {
 	header := c.GetHeader(AuthorizationHeader)
 	if header == "" {
-		errorResponse(c, http.StatusUnauthorized, errors.New("empty auth header"))
+		errorResponse(c, http.StatusUnauthorized, errors.New("error: Missing token"))
 		c.Abort()
 		return
 	}

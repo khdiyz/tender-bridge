@@ -9,6 +9,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type BaseResponse struct {
+	Message string `json:"message"`
+}
+
 type ErrorResponse struct {
 	ErrorMessage string `json:"message"`
 }

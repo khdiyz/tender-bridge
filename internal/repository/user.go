@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"strings"
 	"tender-bridge/internal/models"
@@ -32,16 +33,14 @@ func (r *userRepo) Create(request models.CreateUser) (uuid.UUID, error) {
 	query := `
 	INSERT INTO users (
 		id,
-		full_name,
 		role,
 		username,
 		email,
 		password
-	) VALUES ($1, $2, $3, $4, $5, $6);`
+	) VALUES ($1, $2, $3, $4, $5);`
 
 	if _, err := r.db.Exec(query,
 		id,
-		request.FullName,
 		request.Role,
 		request.Username,
 		request.Email,
@@ -58,7 +57,6 @@ func (r *userRepo) GetList(filter models.UserFilter) ([]models.User, int, error)
 	baseQuery := `
 	SELECT 
 		id, 
-		full_name, 
 		role, 
 		username, 
 		email, 
@@ -76,7 +74,7 @@ func (r *userRepo) GetList(filter models.UserFilter) ([]models.User, int, error)
 
 	// Add search condition
 	if filter.Search != "" {
-		conditions = append(conditions, "full_name ILIKE :search")
+		conditions = append(conditions, "(username || email) ILIKE :search")
 		params["search"] = "%" + filter.Search + "%"
 	}
 
@@ -103,7 +101,6 @@ func (r *userRepo) GetList(filter models.UserFilter) ([]models.User, int, error)
 		var user models.User
 		if err := rows.Scan(
 			&user.Id,
-			&user.FullName,
 			&user.Role,
 			&user.Username,
 			&user.Email,
@@ -138,7 +135,6 @@ func (r *userRepo) GetById(id uuid.UUID) (models.User, error) {
 	query := `
 	SELECT 
 		id, 
-		full_name, 
 		role, 
 		username, 
 		email, 
@@ -148,7 +144,6 @@ func (r *userRepo) GetById(id uuid.UUID) (models.User, error) {
 
 	if err := r.db.QueryRow(query, id).Scan(
 		&user.Id,
-		&user.FullName,
 		&user.Role,
 		&user.Username,
 		&user.Email,
@@ -165,18 +160,16 @@ func (r *userRepo) Update(request models.UpdateUser) error {
 	query := `
 	UPDATE users
 	SET
-		full_name = $2,
-		role = $3,
-		username = $4,
-		email = $5,
-		password = $6
+		role = $2,
+		username = $3,
+		email = $4,
+		password = $5 
 	WHERE
 		id = $1;`
 
 	// Execute the query
 	row, err := r.db.Exec(query,
 		request.Id,
-		request.FullName,
 		request.Role,
 		request.Username,
 		request.Email,
@@ -229,7 +222,6 @@ func (r *userRepo) GetByUsername(username string) (models.User, error) {
 	query := `
 	SELECT 
 		id, 
-		full_name, 
 		role, 
 		username, 
 		email, 
@@ -239,12 +231,44 @@ func (r *userRepo) GetByUsername(username string) (models.User, error) {
 
 	if err := r.db.QueryRow(query, username).Scan(
 		&user.Id,
-		&user.FullName,
 		&user.Role,
 		&user.Username,
 		&user.Email,
 		&user.Password,
 	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, err
+		}
+		r.logger.Error(err)
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func (r *userRepo) GetByEmail(email string) (models.User, error) {
+	var user models.User
+
+	query := `
+	SELECT 
+		id, 
+		role, 
+		username, 
+		email, 
+		password 
+	FROM users 
+	WHERE email = $1;`
+
+	if err := r.db.QueryRow(query, email).Scan(
+		&user.Id,
+		&user.Role,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, err
+		}
 		r.logger.Error(err)
 		return models.User{}, err
 	}

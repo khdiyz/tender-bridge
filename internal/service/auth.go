@@ -102,7 +102,7 @@ func (s *authService) Login(request models.Login) (*models.Token, *models.Token,
 	user, err := s.repo.User.GetByUsername(request.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, serviceError(errors.New("wrong username or password"), codes.Unauthenticated)
+			return nil, nil, serviceError(errors.New("User not found"), codes.NotFound)
 		}
 		return nil, nil, serviceError(err, codes.Internal)
 	}
@@ -113,37 +113,49 @@ func (s *authService) Login(request models.Login) (*models.Token, *models.Token,
 	}
 
 	if user.Password != hashPassword {
-		return nil, nil, serviceError(errors.New("wrong username or password"), codes.Unauthenticated)
+		return nil, nil, serviceError(errors.New("error: Invalid username or password"), codes.Unauthenticated)
 	}
 
 	return s.GenerateTokens(user)
 }
 
 func (s *authService) Register(request models.Register) (*models.Token, *models.Token, error) {
-	_, err := s.repo.User.GetByUsername(request.Username)
+	// Check if the email already exists
+	_, err := s.repo.User.GetByEmail(request.Email) // Ensure GetByEmail belongs to s.repo.User
 	if err == nil {
-		return nil, nil, serviceError(errors.New("user already exists with this username"), codes.InvalidArgument)
+		return nil, nil, serviceError(errors.New("this Email already exists"), codes.InvalidArgument)
 	} else if err != sql.ErrNoRows {
 		return nil, nil, serviceError(err, codes.Internal)
 	}
 
+	// Check if the username already exists
+	_, err = s.repo.User.GetByUsername(request.Username)
+	if err == nil {
+		return nil, nil, serviceError(errors.New("username already exists"), codes.InvalidArgument)
+	} else if err != sql.ErrNoRows {
+		return nil, nil, serviceError(err, codes.Internal)
+	}
+
+	// Hash the password
 	request.Password, err = helper.GenerateHash(request.Password)
 	if err != nil {
 		return nil, nil, serviceError(err, codes.Internal)
 	}
 
+	// Validate role
 	if request.Role != config.RoleClient && request.Role != config.RoleContractor {
-		return nil, nil, serviceError(errors.New("role name must be only: client, contractor"), codes.InvalidArgument)
+		return nil, nil, serviceError(errors.New("invalid role"), codes.InvalidArgument)
 	}
 
+	// Create user
 	userId, err := s.repo.User.Create(models.CreateUser(request))
 	if err != nil {
 		return nil, nil, serviceError(err, codes.Internal)
 	}
 
+	// Generate tokens for the new user
 	return s.GenerateTokens(models.User{
 		Id:       userId,
-		FullName: request.FullName,
 		Role:     request.Role,
 		Username: request.Username,
 		Email:    request.Email,
