@@ -42,3 +42,9 @@ type BidFilter struct {
 	Limit        int
 	Offset       int
 }
+
+type BidNotification struct {
+	OrderID string `json:"tender_id"`
+	BidID   string `json:"bid_id"`
+	Message string `json:"message"`
+}

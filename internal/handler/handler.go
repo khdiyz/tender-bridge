@@ -4,6 +4,7 @@ import (
 	"tender-bridge/config"
 	"tender-bridge/docs"
 	"tender-bridge/internal/service"
+	"tender-bridge/internal/ws"
 	"tender-bridge/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -39,6 +40,13 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 	api := router.Group("/api", h.userIdentity)
 	h.setupClientRoutes(api)
 	h.setupContractorRoutes(api)
+
+	// WebSocket route
+	router.GET("/ws", func(c *gin.Context) {
+		ws.HandleWebSocket(c.Writer, c.Request)
+	})
+
+	ws.StartWebSocketHub()
 
 	return router
 }

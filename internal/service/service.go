@@ -53,7 +53,7 @@ type Tender interface {
 }
 
 type Bid interface {
-	CreateBid(request models.CreateBid) (uuid.UUID, error)
+	SubmitBid(request models.CreateBid) (uuid.UUID, error)
 	GetBids(filter models.BidFilter) ([]models.Bid, int, error)
 	GetBid(id uuid.UUID) (models.Bid, error)
 	UpdateBid(request models.UpdateBid) error

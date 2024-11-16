@@ -6,6 +6,7 @@ import (
 	"tender-bridge/config"
 	"tender-bridge/internal/models"
 	"tender-bridge/internal/repository"
+	"tender-bridge/internal/ws"
 	"tender-bridge/pkg/logger"
 
 	"github.com/google/uuid"
@@ -29,7 +30,7 @@ func NewBidService(repo *repository.Repository, logger *logger.Logger) *bidServi
 	}
 }
 
-func (s *bidService) CreateBid(request models.CreateBid) (uuid.UUID, error) {
+func (s *bidService) SubmitBid(request models.CreateBid) (uuid.UUID, error) {
 	if request.Price <= 0 || request.DeliveryTime <= 0 || request.Comment == "" {
 		return uuid.Nil, serviceError(errors.New("error: Invalid bid data"), codes.InvalidArgument)
 	}
@@ -51,6 +52,10 @@ func (s *bidService) CreateBid(request models.CreateBid) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, serviceError(err, codes.Internal)
 	}
+
+	go func() {
+		ws.BroadcastNotification(tender.ClientId.String(), "Submitted new bid")
+	}()
 
 	return id, nil
 }
@@ -145,6 +150,10 @@ func (s *bidService) AwardBid(clientId, tenderId, bidId uuid.UUID) error {
 	}); err != nil {
 		return serviceError(err, codes.Internal)
 	}
+
+	go func() {
+		ws.BroadcastNotification(bid.ContractorId.String(), "Your bid awarded")
+	}()
 
 	return nil
 }

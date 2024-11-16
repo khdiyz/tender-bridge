@@ -58,7 +58,7 @@ func (h *Handler) submitBid(c *gin.Context) {
 		return
 	}
 
-	bidId, err := h.service.Bid.CreateBid(body)
+	bidId, err := h.service.Bid.SubmitBid(body)
 	if err != nil {
 		fromError(c, err)
 		return
