@@ -33,5 +33,9 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 		}
 	})
 
+	// auth handlers
+	router.POST("/api/register", h.register)
+	router.POST("/api/login", h.login)
+
 	return router
 }

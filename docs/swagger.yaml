@@ -1,10 +1,120 @@
+definitions:
+  handler.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.authResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  models.Login:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  models.Register:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - role
+    - username
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: API Server for Application
   title: Tender Management System API
   version: "1.0"
-paths: {}
+paths:
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Login User
+      parameters:
+      - description: Login
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Login User
+      tags:
+      - Auth
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Register User
+      parameters:
+      - description: Register
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/models.Register'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Register User
+      tags:
+      - Auth
 securityDefinitions:
   ApiKeyAuth:
     in: header
