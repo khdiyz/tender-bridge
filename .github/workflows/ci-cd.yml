@@ -44,6 +44,6 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/tender-bridge:latest
             docker stop tender-bridge-backend || true
             docker rm tender-bridge-backend || true
-            docker run -d --name tender-bridge-backend -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/tender-bridge:latest
-            docker cp /var/www/.tenderbridge.env tender-bridge-backend:/app/.env
+            docker run -d --name tender-bridge-backend -p 7070:7070 ${{ secrets.DOCKER_USERNAME }}/tender-bridge:latest
+            docker cp /var/www/.env tender-bridge-backend:/app/.env
             docker restart tender-bridge-backend
