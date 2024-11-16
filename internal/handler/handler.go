@@ -26,40 +26,56 @@ func NewHandler(service *service.Service, loggers *logger.Logger) *Handler {
 func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 
+	// Setup Swagger documentation
+	h.setupSwagger(router)
+
+	// Apply middleware
+	router.Use(corsMiddleware())
+
+	// Public routes
+	h.setupPublicRoutes(router)
+
+	// Protected API routes
+	api := router.Group("/api", h.userIdentity)
+	h.setupClientRoutes(api)
+	h.setupContractorRoutes(api)
+
+	return router
+}
+
+func (h *Handler) setupSwagger(router *gin.Engine) {
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler), func(ctx *gin.Context) {
 		docs.SwaggerInfo.Host = ctx.Request.Host
 		if ctx.Request.TLS != nil {
 			docs.SwaggerInfo.Schemes = []string{"https"}
 		}
 	})
+}
 
-	router.Use(corsMiddleware())
-
-	// auth handlers
+func (h *Handler) setupPublicRoutes(router *gin.Engine) {
 	router.POST("/register", h.register)
 	router.POST("/login", h.login)
+}
 
-	api := router.Group("/api", h.userIdentity)
+func (h *Handler) setupClientRoutes(api *gin.RouterGroup) {
+	clientTenders := api.Group("/client/tenders")
 	{
-		tenders := api.Group("/client/tenders")
-		{
-			tenders.POST("", h.createTender)
-			tenders.GET("", h.getTenders)
-			tenders.GET("/:id", h.getTender)
-			tenders.PUT("/:id", h.updateTenderStatus)
-			tenders.DELETE("/:id", h.deleteTender)
-			tenders.GET("/:id/bids", h.getClientTenderBids)
-			tenders.POST(":id/award/:bidId", h.awardBid)
-		}
+		clientTenders.POST("", h.createTender)
+		clientTenders.GET("", h.getTenders)
+		clientTenders.GET("/:id", h.getTender)
+		clientTenders.PUT("/:id", h.updateTenderStatus)
+		clientTenders.DELETE("/:id", h.deleteTender)
+		clientTenders.GET("/:id/bids", h.getClientTenderBids)
+		clientTenders.POST("/:id/award/:bidId", h.awardBid)
+	}
+}
 
-		bids := api.Group("/contractor/tenders/:id/bid")
-		{
-			bids.POST("", h.submitBid)
-		}
-
-		api.GET("/contractor/bids", h.getContractorBids)
-		api.DELETE("/contractor/bids/:id", h.deleteContractorBid)
+func (h *Handler) setupContractorRoutes(api *gin.RouterGroup) {
+	contractorBids := api.Group("/contractor/tenders/:id/bid")
+	{
+		contractorBids.POST("", h.submitBid)
 	}
 
-	return router
+	api.GET("/contractor/bids", h.getContractorBids)
+	api.DELETE("/contractor/bids/:id", h.deleteContractorBid)
 }

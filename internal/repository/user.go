@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 var (
@@ -274,4 +275,43 @@ func (r *userRepo) GetByEmail(email string) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepo) GetByIds(ids []uuid.UUID) ([]models.User, error) {
+	users := []models.User{}
+
+	query := `
+	SELECT 
+		id, 
+		role, 
+		username, 
+		email, 
+		password 
+	FROM users 
+	WHERE id = ANY($1);`
+
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.User
+		if err = rows.Scan(
+			&user.Id,
+			&user.Role,
+			&user.Username,
+			&user.Email,
+			&user.Password,
+		); err != nil {
+			r.logger.Error(err)
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }

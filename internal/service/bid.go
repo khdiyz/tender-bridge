@@ -12,6 +12,11 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+var (
+	errBidNotFound    = errors.New("error: Bid not found or access denied")
+	errTenderNotFound = errors.New("error: Tender not found or access denied")
+)
+
 type bidService struct {
 	repo   *repository.Repository
 	logger *logger.Logger
@@ -79,11 +84,11 @@ func (s *bidService) UpdateBid(request models.UpdateBid) error {
 func (s *bidService) DeleteContractorBid(contractorId, bidId uuid.UUID) error {
 	bid, err := s.repo.Bid.GetById(bidId)
 	if err != nil {
-		return serviceError(errors.New("error: Bid not found or access denied"), codes.NotFound)
+		return serviceError(errBidNotFound, codes.NotFound)
 	}
 
 	if bid.ContractorId != contractorId {
-		return serviceError(errors.New("error: Bid not found or access denied"), codes.NotFound)
+		return serviceError(errBidNotFound, codes.NotFound)
 	}
 
 	if err := s.repo.Bid.Delete(bidId); err != nil {
@@ -96,16 +101,24 @@ func (s *bidService) DeleteContractorBid(contractorId, bidId uuid.UUID) error {
 func (s *bidService) AwardBid(clientId, tenderId, bidId uuid.UUID) error {
 	tender, err := s.repo.Tender.GetById(tenderId)
 	if err != nil {
-		return serviceError(errors.New("error: Tender not found or access denied"), codes.NotFound)
+		return serviceError(errTenderNotFound, codes.NotFound)
 	}
 
 	if tender.ClientId != clientId {
-		return serviceError(errors.New("error: Tender not found or access denied"), codes.NotFound)
+		return serviceError(errTenderNotFound, codes.NotFound)
+	}
+
+	if tender.Status != config.TenderStatusOpen {
+		return serviceError(errors.New("the tender is not open"), codes.InvalidArgument)
 	}
 
 	bid, err := s.repo.Bid.GetById(bidId)
 	if err != nil {
 		return serviceError(err, codes.Internal)
+	}
+
+	if bid.Status != config.BidStatusPending {
+		return serviceError(errors.New("the bid is not pending"), codes.InvalidArgument)
 	}
 
 	if err = s.repo.Tender.Update(models.UpdateTender{

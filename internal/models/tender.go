@@ -8,13 +8,15 @@ import (
 
 type Tender struct {
 	Id          uuid.UUID `json:"id"`
-	ClientId    uuid.UUID `json:"client_id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Deadline    time.Time `json:"deadline"`
 	Budget      int64     `json:"budget"`
 	File        string    `json:"file"`
 	Status      string    `json:"status"`
+
+	ClientId uuid.UUID `json:"-"`
+	Client   User      `json:"client"`
 }
 
 type CreateTender struct {

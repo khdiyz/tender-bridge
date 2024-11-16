@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"math"
 	"net/http"
 	"tender-bridge/config"
 	"tender-bridge/internal/models"
@@ -12,7 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type createResponse struct {
+const (
+	idQuery     = "id"
+	searchQuery = "search"
+)
+
+type createTenderResponse struct {
 	Id    uuid.UUID `json:"id"`
 	Title string    `json:"title"`
 }
@@ -23,7 +27,7 @@ type createResponse struct {
 // @Accept json
 // @Produce json
 // @Param create body models.CreateTender true "Create tender"
-// @Success 200 {object} createResponse
+// @Success 201 {object} createTenderResponse
 // @Failure 400,404,500 {object} ErrorResponse
 // @Router /api/client/tenders [post]
 // @Security ApiKeyAuth
@@ -58,7 +62,7 @@ func (h *Handler) createTender(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, createResponse{
+	c.JSON(http.StatusCreated, createTenderResponse{
 		Id:    tenderId,
 		Title: body.Title,
 	})
@@ -72,7 +76,7 @@ func (h *Handler) createTender(c *gin.Context) {
 // @Param limit query int64 true "limit" default(10)
 // @Param page  query int64 true "page" default(1)
 // @Param search  query string false "search"
-// @Success 201 {object} []models.Tender
+// @Success 200 {object} []models.Tender
 // @Failure 400,401,404,500 {object} ErrorResponse
 // @Router /api/client/tenders [get]
 // @Security ApiKeyAuth
@@ -87,20 +91,16 @@ func (h *Handler) getTenders(c *gin.Context) {
 	filter.Limit = pagination.Limit
 	filter.Offset = pagination.Offset
 
-	search := c.Query("search")
+	search := c.Query(searchQuery)
 	if search != "" {
 		filter.Search = search
 	}
 
-	tenders, total, err := h.service.Tender.GetTenders(filter)
+	tenders, _, err := h.service.Tender.GetTenders(filter)
 	if err != nil {
 		fromError(c, err)
 		return
 	}
-
-	pagination.TotalCount = total
-	pageCount := math.Ceil(float64(pagination.TotalCount) / float64(pagination.Limit))
-	pagination.PageCount = int(pageCount)
 
 	c.JSON(http.StatusOK, tenders)
 }
@@ -116,7 +116,7 @@ func (h *Handler) getTenders(c *gin.Context) {
 // @Router /api/client/tenders/{id} [get]
 // @Security ApiKeyAuth
 func (h *Handler) getTender(c *gin.Context) {
-	id, err := getUUIDParam(c, "id")
+	id, err := getUUIDParam(c, idQuery)
 	if err != nil {
 		errorResponse(c, http.StatusBadRequest, err)
 		return
@@ -131,18 +131,14 @@ func (h *Handler) getTender(c *gin.Context) {
 	c.JSON(http.StatusOK, tender)
 }
 
-type updateTenderStatusResponse struct {
-	Message string `json:"message"`
-}
-
-// @Description Update Tender
-// @Summary Update Tender
+// @Description Update Tender Status
+// @Summary Update Tender Status
 // @Tags Tender
 // @Accept json
 // @Produce json
 // @Param id path string true "tender id"
-// @Param update body models.UpdateTender true "update tender"
-// @Success 200 {object} createResponse
+// @Param update body models.UpdateTenderStatus true "update tender status"
+// @Success 200 {object} BaseResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
 // @Router /api/client/tenders/{id} [put]
 // @Security ApiKeyAuth
@@ -171,17 +167,12 @@ func (h *Handler) updateTenderStatus(c *gin.Context) {
 	}
 	body.Id = id
 
-	if err := validator.ValidatePayloads(body); err != nil {
-		errorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
 	if err = h.service.Tender.UpdateTenderStatus(body); err != nil {
 		fromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, updateTenderStatusResponse{
+	c.JSON(http.StatusOK, BaseResponse{
 		Message: "Tender status updated",
 	})
 }
@@ -192,9 +183,9 @@ func (h *Handler) updateTenderStatus(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "tender id"
-// @Success 200 {object} createResponse
+// @Success 200 {object} BaseResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
-// @Router /api/tenders/{id} [delete]
+// @Router /api/client/tenders/{id} [delete]
 // @Security ApiKeyAuth
 func (h *Handler) deleteTender(c *gin.Context) {
 	id, err := getUUIDParam(c, "id")
@@ -219,7 +210,7 @@ func (h *Handler) deleteTender(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updateTenderStatusResponse{
+	c.JSON(http.StatusOK, BaseResponse{
 		Message: "Tender deleted successfully",
 	})
 }

@@ -28,9 +28,9 @@ type User interface {
 	GetById(id uuid.UUID) (models.User, error)
 	Update(request models.UpdateUser) error
 	Delete(id uuid.UUID) error
-
 	GetByUsername(username string) (models.User, error)
 	GetByEmail(email string) (models.User, error)
+	GetByIds(ids []uuid.UUID) ([]models.User, error)
 }
 
 type Tender interface {

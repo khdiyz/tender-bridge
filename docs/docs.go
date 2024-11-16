@@ -58,8 +58,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -122,10 +122,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.createResponse"
+                            "$ref": "#/definitions/handler.createTenderResponse"
                         }
                     },
                     "400": {
@@ -215,7 +215,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Update Tender",
+                "description": "Update Tender Status",
                 "consumes": [
                     "application/json"
                 ],
@@ -225,7 +225,7 @@ const docTemplate = `{
                 "tags": [
                     "Tender"
                 ],
-                "summary": "Update Tender",
+                "summary": "Update Tender Status",
                 "parameters": [
                     {
                         "type": "string",
@@ -235,12 +235,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "update tender",
+                        "description": "update tender status",
                         "name": "update",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.UpdateTender"
+                            "$ref": "#/definitions/models.UpdateTenderStatus"
                         }
                     }
                 ],
@@ -248,7 +248,253 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.createResponse"
+                            "$ref": "#/definitions/handler.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete Tender",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tender"
+                ],
+                "summary": "Delete Tender",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tender id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/client/tenders/{id}/award/{bidId}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Award Bid",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tender"
+                ],
+                "summary": "Award Bid",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tender id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "tender id",
+                        "name": "bidId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/client/tenders/{id}/bids": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get Client Tender Bids",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bid"
+                ],
+                "summary": "Get Client Tender Bids",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tender id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Bid"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contractor/bids": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get Contractor Bids",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bid"
+                ],
+                "summary": "Get Contractor Bids",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Bid"
+                            }
                         }
                     },
                     "400": {
@@ -285,7 +531,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Create Bid",
+                "description": "Submit Bid",
                 "consumes": [
                     "application/json"
                 ],
@@ -295,7 +541,7 @@ const docTemplate = `{
                 "tags": [
                     "Bid"
                 ],
-                "summary": "Create Bid",
+                "summary": "Submit Bid",
                 "parameters": [
                     {
                         "type": "string",
@@ -305,7 +551,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Create bid",
+                        "description": "Submit bid",
                         "name": "create",
                         "in": "body",
                         "required": true,
@@ -315,71 +561,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.createResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/tenders/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete Tender",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tender"
-                ],
-                "summary": "Delete Tender",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "tender id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.createResponse"
+                            "$ref": "#/definitions/handler.submitBidResponse"
                         }
                     },
                     "400": {
@@ -515,6 +700,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -531,13 +724,50 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.createResponse": {
+        "handler.createTenderResponse": {
             "type": "object",
             "properties": {
                 "id": {
                     "type": "string"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.submitBidResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Bid": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "string"
+                },
+                "contractor_id": {
+                    "type": "string"
+                },
+                "delivery_time": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tender_id": {
                     "type": "string"
                 }
             }
@@ -625,8 +855,8 @@ const docTemplate = `{
                 "budget": {
                     "type": "integer"
                 },
-                "client_id": {
-                    "type": "string"
+                "client": {
+                    "$ref": "#/definitions/models.User"
                 },
                 "deadline": {
                     "type": "string"
@@ -648,25 +878,27 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UpdateTender": {
+        "models.UpdateTenderStatus": {
             "type": "object",
             "properties": {
-                "budget": {
-                    "type": "integer"
-                },
-                "deadline": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "file": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
                 },
-                "title": {
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

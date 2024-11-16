@@ -54,11 +54,35 @@ func (s *tenderService) GetTenders(filter models.TenderFilter) ([]models.Tender,
 		return nil, 0, serviceError(err, codes.Internal)
 	}
 
+	clientIds := make([]uuid.UUID, len(tenders))
+	for i := range tenders {
+		clientIds[i] = tenders[i].ClientId
+	}
+
+	clients, err := s.repo.User.GetByIds(clientIds)
+	if err != nil {
+		return nil, 0, serviceError(err, codes.Internal)
+	}
+
+	clientsMap := make(map[uuid.UUID]models.User, len(clients))
+	for i := range clients {
+		clientsMap[clients[i].Id] = clients[i]
+	}
+
+	for i := range tenders {
+		tenders[i].Client = clientsMap[tenders[i].ClientId]
+	}
+
 	return tenders, total, nil
 }
 
 func (s *tenderService) GetTender(id uuid.UUID) (models.Tender, error) {
 	tender, err := s.repo.Tender.GetById(id)
+	if err != nil {
+		return models.Tender{}, serviceError(err, codes.Internal)
+	}
+
+	tender.Client, err = s.repo.User.GetById(tender.ClientId)
 	if err != nil {
 		return models.Tender{}, serviceError(err, codes.Internal)
 	}

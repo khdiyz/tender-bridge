@@ -1,4 +1,9 @@
 definitions:
+  handler.BaseResponse:
+    properties:
+      message:
+        type: string
+    type: object
   handler.ErrorResponse:
     properties:
       message:
@@ -9,11 +14,35 @@ definitions:
       token:
         type: string
     type: object
-  handler.createResponse:
+  handler.createTenderResponse:
     properties:
       id:
         type: string
       title:
+        type: string
+    type: object
+  handler.submitBidResponse:
+    properties:
+      id:
+        type: string
+      price:
+        type: integer
+    type: object
+  models.Bid:
+    properties:
+      comments:
+        type: string
+      contractor_id:
+        type: string
+      delivery_time:
+        type: integer
+      id:
+        type: string
+      price:
+        type: integer
+      status:
+        type: string
+      tender_id:
         type: string
     type: object
   models.CreateBid:
@@ -72,8 +101,8 @@ definitions:
     properties:
       budget:
         type: integer
-      client_id:
-        type: string
+      client:
+        $ref: '#/definitions/models.User'
       deadline:
         type: string
       description:
@@ -87,19 +116,20 @@ definitions:
       title:
         type: string
     type: object
-  models.UpdateTender:
+  models.UpdateTenderStatus:
     properties:
-      budget:
-        type: integer
-      deadline:
-        type: string
-      description:
-        type: string
-      file:
-        type: string
       status:
         type: string
-      title:
+    type: object
+  models.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080
@@ -134,8 +164,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             items:
               $ref: '#/definitions/models.Tender'
@@ -175,10 +205,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/handler.createResponse'
+            $ref: '#/definitions/handler.createTenderResponse'
         "400":
           description: Bad Request
           schema:
@@ -197,6 +227,44 @@ paths:
       tags:
       - Tender
   /api/client/tenders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Tender
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Tender
+      tags:
+      - Tender
     get:
       consumes:
       - application/json
@@ -238,26 +306,26 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update Tender
+      description: Update Tender Status
       parameters:
       - description: tender id
         in: path
         name: id
         required: true
         type: string
-      - description: update tender
+      - description: update tender status
         in: body
         name: update
         required: true
         schema:
-          $ref: '#/definitions/models.UpdateTender'
+          $ref: '#/definitions/models.UpdateTenderStatus'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.createResponse'
+            $ref: '#/definitions/handler.BaseResponse'
         "400":
           description: Bad Request
           schema:
@@ -276,21 +344,141 @@ paths:
             $ref: '#/definitions/handler.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Update Tender
+      summary: Update Tender Status
       tags:
       - Tender
-  /api/contractor/tenders/{id}/bid:
+  /api/client/tenders/{id}/award/{bidId}:
     post:
       consumes:
       - application/json
-      description: Create Bid
+      description: Award Bid
       parameters:
       - description: tender id
         in: path
         name: id
         required: true
         type: string
-      - description: Create bid
+      - description: tender id
+        in: path
+        name: bidId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Award Bid
+      tags:
+      - Tender
+  /api/client/tenders/{id}/bids:
+    get:
+      consumes:
+      - application/json
+      description: Get Client Tender Bids
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bid'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Client Tender Bids
+      tags:
+      - Bid
+  /api/contractor/bids:
+    get:
+      consumes:
+      - application/json
+      description: Get Contractor Bids
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bid'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Contractor Bids
+      tags:
+      - Bid
+  /api/contractor/tenders/{id}/bid:
+    post:
+      consumes:
+      - application/json
+      description: Submit Bid
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Submit bid
         in: body
         name: create
         required: true
@@ -299,10 +487,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/handler.createResponse'
+            $ref: '#/definitions/handler.submitBidResponse'
         "400":
           description: Bad Request
           schema:
@@ -321,48 +509,9 @@ paths:
             $ref: '#/definitions/handler.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Create Bid
+      summary: Submit Bid
       tags:
       - Bid
-  /api/tenders/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete Tender
-      parameters:
-      - description: tender id
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handler.createResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete Tender
-      tags:
-      - Tender
   /login:
     post:
       consumes:

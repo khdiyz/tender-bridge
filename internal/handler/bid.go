@@ -16,14 +16,14 @@ type submitBidResponse struct {
 	Price int64     `json:"price"`
 }
 
-// @Description Create Bid
-// @Summary Create Bid
+// @Description Submit Bid
+// @Summary Submit Bid
 // @Tags Bid
 // @Accept json
 // @Produce json
 // @Param id path string true "tender id"
-// @Param create body models.CreateBid true "Create bid"
-// @Success 200 {object} createResponse
+// @Param create body models.CreateBid true "Submit bid"
+// @Success 201 {object} submitBidResponse
 // @Failure 400,401,404,500 {object} ErrorResponse
 // @Router /api/contractor/tenders/{id}/bid [post]
 // @Security ApiKeyAuth
@@ -70,6 +70,15 @@ func (h *Handler) submitBid(c *gin.Context) {
 	})
 }
 
+// @Description Get Contractor Bids
+// @Summary Get Contractor Bids
+// @Tags Bid
+// @Accept json
+// @Produce json
+// @Success 200 {object} []models.Bid
+// @Failure 400,401,404,500 {object} ErrorResponse
+// @Router /api/contractor/bids [get]
+// @Security ApiKeyAuth
 func (h *Handler) getContractorBids(c *gin.Context) {
 	userInfo, err := getUserInfo(c)
 	if err != nil {
@@ -102,6 +111,16 @@ func (h *Handler) getContractorBids(c *gin.Context) {
 	c.JSON(http.StatusOK, bids)
 }
 
+// @Description Get Client Tender Bids
+// @Summary Get Client Tender Bids
+// @Tags Bid
+// @Accept json
+// @Produce json
+// @Param id path string true "tender id"
+// @Success 200 {object} []models.Bid
+// @Failure 400,401,404,500 {object} ErrorResponse
+// @Router /api/client/tenders/{id}/bids [get]
+// @Security ApiKeyAuth
 func (h *Handler) getClientTenderBids(c *gin.Context) {
 	userInfo, err := getUserInfo(c)
 	if err != nil {
@@ -140,6 +159,17 @@ func (h *Handler) getClientTenderBids(c *gin.Context) {
 	c.JSON(http.StatusOK, bids)
 }
 
+// @Description Award Bid
+// @Summary Award Bid
+// @Tags Tender
+// @Accept json
+// @Produce json
+// @Param id path string true "tender id"
+// @Param bidId path string true "tender id"
+// @Success 200 {object} BaseResponse
+// @Failure 400,401,404,500 {object} ErrorResponse
+// @Router /api/client/tenders/{id}/award/{bidId} [post]
+// @Security ApiKeyAuth
 func (h *Handler) awardBid(c *gin.Context) {
 	userInfo, err := getUserInfo(c)
 	if err != nil {
@@ -170,8 +200,8 @@ func (h *Handler) awardBid(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ErrorResponse{
-		ErrorMessage: "Bid awarded successfully",
+	c.JSON(http.StatusOK, BaseResponse{
+		Message: "Bid awarded successfully",
 	})
 }
 
