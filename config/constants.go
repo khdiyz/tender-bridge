@@ -14,4 +14,8 @@ const (
 	RoleAdmin      = "admin"
 	RoleClient     = "client"
 	RoleContractor = "contractor"
+
+	TenderStatusOpen    = "open"
+	TenderStatusClosed  = "closed"
+	TenderStatusAwarded = "awarded"
 )

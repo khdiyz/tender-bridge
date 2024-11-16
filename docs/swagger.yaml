@@ -11,6 +11,33 @@ definitions:
       refresh_token:
         type: string
     type: object
+  handler.createResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  handler.getTendersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Tender'
+        type: array
+      pagination:
+        $ref: '#/definitions/models.Pagination'
+    type: object
+  models.CreateTender:
+    properties:
+      budget:
+        type: integer
+      deadline:
+        type: string
+      description:
+        type: string
+      file:
+        type: string
+      title:
+        type: string
+    type: object
   models.Login:
     properties:
       password:
@@ -20,6 +47,19 @@ definitions:
     required:
     - password
     - username
+    type: object
+  models.Pagination:
+    properties:
+      limit:
+        default: 10
+        type: integer
+      page:
+        default: 1
+        type: integer
+      page_count:
+        type: integer
+      total_count:
+        type: integer
     type: object
   models.Register:
     properties:
@@ -39,6 +79,40 @@ definitions:
     - password
     - role
     - username
+    type: object
+  models.Tender:
+    properties:
+      budget:
+        type: integer
+      client_id:
+        type: string
+      deadline:
+        type: string
+      description:
+        type: string
+      file:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  models.UpdateTender:
+    properties:
+      budget:
+        type: integer
+      deadline:
+        type: string
+      description:
+        type: string
+      file:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -115,6 +189,212 @@ paths:
       summary: Register User
       tags:
       - Auth
+  /api/tenders:
+    get:
+      consumes:
+      - application/json
+      description: Get Tenders
+      parameters:
+      - default: 10
+        description: limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        description: page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: search
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getTendersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Tenders
+      tags:
+      - Tender
+    post:
+      consumes:
+      - application/json
+      description: Create Tender
+      parameters:
+      - description: Create tender
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTender'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Tender
+      tags:
+      - Tender
+  /api/tenders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Tender
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Tender
+      tags:
+      - Tender
+    get:
+      consumes:
+      - application/json
+      description: Get Tender
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tender'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Tender
+      tags:
+      - Tender
+    put:
+      consumes:
+      - application/json
+      description: Update Tender
+      parameters:
+      - description: tender id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: update tender
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTender'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Tender
+      tags:
+      - Tender
 securityDefinitions:
   ApiKeyAuth:
     in: header

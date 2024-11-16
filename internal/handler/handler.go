@@ -33,9 +33,23 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 		}
 	})
 
+	router.Use(corsMiddleware())
+
 	// auth handlers
 	router.POST("/api/register", h.register)
 	router.POST("/api/login", h.login)
+
+	api := router.Group("/api", h.userIdentity)
+	{
+		tenders := api.Group("/tenders")
+		{
+			tenders.POST("", h.createTender)
+			tenders.GET("", h.getTenders)
+			tenders.GET("/:id", h.getTender)
+			tenders.PUT("/:id", h.updateTender)
+			tenders.DELETE("/:id", h.deleteTender)
+		}
+	}
 
 	return router
 }
