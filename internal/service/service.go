@@ -14,12 +14,14 @@ import (
 type Service struct {
 	User
 	Authorization
+	Tender
 }
 
 func NewService(repos *repository.Repository, storage *storage.Storage, cfg *config.Config, loggers *logger.Logger) *Service {
 	return &Service{
 		Authorization: NewAuthService(repos, loggers, cfg),
 		User:          NewUserService(repos, loggers),
+		Tender:        NewTenderService(repos, loggers),
 	}
 }
 
@@ -37,4 +39,12 @@ type Authorization interface {
 	ParseToken(token string) (*jwtCustomClaim, error)
 	Login(request models.Login) (*models.Token, *models.Token, error)
 	Register(request models.Register) (*models.Token, *models.Token, error)
+}
+
+type Tender interface {
+	CreateTender(request models.CreateTender) (uuid.UUID, error)
+	GetTenders(filter models.TenderFilter) ([]models.Tender, int, error)
+	GetTender(id uuid.UUID) (models.Tender, error)
+	UpdateTender(request models.UpdateTender) error
+	DeleteTender(id uuid.UUID) error
 }
