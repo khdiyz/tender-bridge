@@ -6,6 +6,7 @@ import (
 	"tender-bridge/internal/service"
 	"tender-bridge/internal/ws"
 	"tender-bridge/pkg/logger"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -81,7 +82,7 @@ func (h *Handler) setupClientRoutes(api *gin.RouterGroup) {
 func (h *Handler) setupContractorRoutes(api *gin.RouterGroup) {
 	contractorBids := api.Group("/contractor/tenders/:id/bid")
 	{
-		contractorBids.POST("", h.submitBid)
+		contractorBids.POST("", rateLimitMiddleware(5, time.Minute), h.submitBid)
 	}
 
 	api.GET("/contractor/bids", h.getContractorBids)

@@ -2,6 +2,7 @@ package service
 
 import (
 	"tender-bridge/config"
+	"tender-bridge/internal/cache"
 	"tender-bridge/internal/models"
 	"tender-bridge/internal/repository"
 	"tender-bridge/internal/storage"
@@ -18,11 +19,11 @@ type Service struct {
 	Bid
 }
 
-func NewService(repos *repository.Repository, storage *storage.Storage, cfg *config.Config, loggers *logger.Logger) *Service {
+func NewService(repos *repository.Repository, storage *storage.Storage, cache *cache.RedisCache, cfg *config.Config, loggers *logger.Logger) *Service {
 	return &Service{
 		Authorization: NewAuthService(repos, loggers, cfg),
 		User:          NewUserService(repos, loggers),
-		Tender:        NewTenderService(repos, loggers),
+		Tender:        NewTenderService(repos, cache, loggers),
 		Bid:           NewBidService(repos, loggers),
 	}
 }

@@ -2,18 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"tender-bridge/cmd/app/server"
 	"tender-bridge/config"
+	"tender-bridge/internal/cache"
 	"tender-bridge/internal/handler"
 	"tender-bridge/internal/repository"
 	"tender-bridge/internal/service"
 	"tender-bridge/internal/storage"
 	"tender-bridge/pkg/logger"
 	"tender-bridge/pkg/setup"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // @title Tender Management System API
@@ -38,9 +42,16 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+	redisCache := cache.NewRedisCache(redisClient)
+
 	repos := repository.NewRepository(db, logger)
 	storage := storage.NewStorage(minio, cfg, logger)
-	services := service.NewService(repos, storage, cfg, logger)
+	services := service.NewService(repos, storage, redisCache, cfg, logger)
 	handlers := handler.NewHandler(services, logger)
 
 	srv := new(server.Server)

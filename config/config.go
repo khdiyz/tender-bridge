@@ -30,6 +30,7 @@ type Config struct {
 	RedisHost     string
 	RedisPort     int
 	RedisPassword string
+	RedisDB       int
 
 	JWTSecret                string
 	JWTAccessExpirationHours int
@@ -61,6 +62,7 @@ func GetConfig() *Config {
 			RedisHost:     cast.ToString(getOrReturnDefault("REDIS_HOST", "142.93.102.185")),
 			RedisPort:     cast.ToInt(getOrReturnDefault("REDIS_PORT", 6379)),
 			RedisPassword: cast.ToString(getOrReturnDefault("REDIS_PASSWORD", "")),
+			RedisDB:       cast.ToInt(getOrReturnDefault("REDIS_DB", 0)),
 
 			JWTSecret:                cast.ToString(getOrReturnDefault("JWT_SECRET", "tender-bridge-forever")),
 			JWTAccessExpirationHours: cast.ToInt(getOrReturnDefault("JWT_ACCESS_EXPIRATION_HOURS", "12")),

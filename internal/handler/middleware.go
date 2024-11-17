@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"tender-bridge/config"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -67,5 +71,64 @@ func corsMiddleware() gin.HandlerFunc {
 			return
 		}
 		ctx.Next()
+	}
+}
+
+var redisClient *redis.Client
+
+func init() {
+	cfg := config.GetConfig()
+
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
+		Password: cfg.RedisPassword,
+		DB:       0,
+	})
+}
+
+// RateLimitMiddleware enforces rate limits for a specific endpoint
+func rateLimitMiddleware(limit int, duration time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userInfo, err := getUserInfo(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		if userInfo.Id.String() == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		ctx := context.Background()
+		key := "rate_limit:" + userInfo.Id.String()
+
+		// Increment the count and set expiration if key doesn't exist
+		count, err := redisClient.Incr(ctx, key).Result()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enforce rate limit"})
+			c.Abort()
+			return
+		}
+
+		// Set expiration on the first request
+		if count == 1 {
+			redisClient.Expire(ctx, key, duration)
+		}
+
+		// Check if the limit is exceeded
+		if int(count) > limit {
+			ttl, _ := redisClient.TTL(ctx, key).Result()
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":       "Rate limit exceeded",
+				"retry_after": ttl.Seconds(),
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
 	}
 }

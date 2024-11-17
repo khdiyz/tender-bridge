@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"tender-bridge/config"
+	"tender-bridge/internal/cache"
 	"tender-bridge/internal/models"
 	"tender-bridge/internal/repository"
 	"tender-bridge/pkg/logger"
@@ -15,12 +16,14 @@ import (
 
 type tenderService struct {
 	repo   *repository.Repository
+	cache  *cache.RedisCache
 	logger *logger.Logger
 }
 
-func NewTenderService(repo *repository.Repository, logger *logger.Logger) *tenderService {
+func NewTenderService(repo *repository.Repository, cache *cache.RedisCache, logger *logger.Logger) *tenderService {
 	return &tenderService{
 		repo:   repo,
+		cache:  cache,
 		logger: logger,
 	}
 }
@@ -45,10 +48,24 @@ func (s *tenderService) CreateTender(request models.CreateTender) (uuid.UUID, er
 		return uuid.Nil, serviceError(err, codes.Internal)
 	}
 
+	go func() {
+		if err := s.cache.Delete("tender_list"); err != nil {
+			s.logger.Error(err)
+		}
+	}()
+
 	return id, nil
 }
 
 func (s *tenderService) GetTenders(filter models.TenderFilter) ([]models.Tender, int, error) {
+	// cacheKey := "tender_list"
+	// var tenders []models.Tender
+
+	// if err := s.cache.Get(cacheKey, &tenders); err == nil {
+	// 	s.logger.Info("get tenders from cache")
+	// 	return tenders, 0, nil
+	// }
+
 	tenders, total, err := s.repo.Tender.GetList(filter)
 	if err != nil {
 		return nil, 0, serviceError(err, codes.Internal)
@@ -72,6 +89,12 @@ func (s *tenderService) GetTenders(filter models.TenderFilter) ([]models.Tender,
 	for i := range tenders {
 		tenders[i].Client = clientsMap[tenders[i].ClientId]
 	}
+
+	// go func() {
+	// 	if err := s.cache.Set(cacheKey, tenders, 10*time.Minute); err != nil {
+	// 		s.logger.Error(err)
+	// 	}
+	// }()
 
 	return tenders, total, nil
 }
