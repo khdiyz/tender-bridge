@@ -13,7 +13,6 @@ import (
 	"tender-bridge/internal/handler"
 	"tender-bridge/internal/repository"
 	"tender-bridge/internal/service"
-	"tender-bridge/internal/storage"
 	"tender-bridge/pkg/logger"
 	"tender-bridge/pkg/setup"
 
@@ -37,11 +36,6 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	minio, err := setup.SetupMinioConnection(cfg, logger)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.RedisHost, cfg.RedisPort),
 		Password: cfg.RedisPassword,
@@ -50,8 +44,7 @@ func main() {
 	redisCache := cache.NewRedisCache(redisClient)
 
 	repos := repository.NewRepository(db, logger)
-	storage := storage.NewStorage(minio, cfg, logger)
-	services := service.NewService(repos, storage, redisCache, cfg, logger)
+	services := service.NewService(repos, redisCache, cfg, logger)
 	handlers := handler.NewHandler(services, logger)
 
 	srv := new(server.Server)

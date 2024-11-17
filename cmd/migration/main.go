@@ -27,7 +27,12 @@ func main() {
 		return
 	}
 
-	db, err := setup.SetupPostgresConnection(config.GetConfig())
+	cfg := config.GetConfig()
+
+	fmt.Println(cfg.PostgresHost)
+	fmt.Println(cfg.PostgresDatabase)
+	
+	db, err := setup.SetupPostgresConnection(cfg)
 	if err != nil {
 		logrus.Panic(err.Error())
 	}

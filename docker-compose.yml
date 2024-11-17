@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+    command: ./wait-for-postgres.sh db ./main
+    ports:
+      - "8888:8888"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: tender_bridge_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      JWT_SECRET: tender-bridge-forever
+      JWT_ACCESS_EXPIRATION_HOURS: 12
+      JWT_REFRESH_EXPIRATION_DAYS: 3
+      HASH_KEY: skd32r8wdahHSdqw
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: tender_bridge_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    command: redis-server
+    ports:
+      - "6379:6379"
+
+volumes:
+  db_data:

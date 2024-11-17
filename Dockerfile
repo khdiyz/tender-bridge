@@ -1,26 +1,21 @@
-FROM golang:1.22-alpine3.20 AS builder
-
-RUN apk add --no-cache tzdata
+FROM golang:1.22-alpine
 
 WORKDIR /app
 
+# Copy and install dependencies
 COPY go.mod go.sum ./
-RUN go mod tidy && go mod vendor
+RUN go mod download
 
+# Copy the source code
 COPY . .
+
+# Install PostgreSQL client
+RUN apk add --no-cache postgresql-client
+
+# Make wait-for-postgres.sh executable
+RUN chmod +x wait-for-postgres.sh
+
+# Build the Go application
 RUN go build -o main ./cmd/app/main.go
-
-FROM alpine:3.20
-
-ENV TZ="Asia/Tashkent"
-
-RUN apk add --no-cache tzdata
-
-WORKDIR /app
-
-COPY --from=builder /app/main .
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-
-EXPOSE 8888
 
 CMD ["./main"]
