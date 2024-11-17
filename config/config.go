@@ -49,7 +49,7 @@ func GetConfig() *Config {
 	once.Do(func() {
 		instance = &Config{
 			HTTPHost:    cast.ToString(getOrReturnDefault("HOST", "localhost")),
-			HTTPPort:    cast.ToInt(getOrReturnDefault("PORT", 8080)),
+			HTTPPort:    cast.ToInt(getOrReturnDefault("PORT", 8888)),
 			Environment: cast.ToString(getOrReturnDefault("ENVIRONMENT", EnvironmentDevelopment)),
 			Debug:       cast.ToBool(getOrReturnDefault("DEBUG", true)),
 

@@ -21,6 +21,6 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-EXPOSE 7070
+EXPOSE 8888
 
 CMD ["./main"]
