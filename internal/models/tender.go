@@ -46,7 +46,8 @@ type UpdateTenderStatus struct {
 }
 
 type TenderFilter struct {
-	Search string
-	Limit  int
-	Offset int
+	Search   string
+	Limit    int
+	Offset   int
+	ClientId uuid.UUID
 }

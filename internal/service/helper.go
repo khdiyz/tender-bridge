@@ -1,7 +1,11 @@
 package service
 
 import (
+	"crypto/md5"
+	"encoding/json"
+	"fmt"
 	"strings"
+	"tender-bridge/internal/models"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,4 +39,20 @@ func serviceError(err error, code codes.Code) error {
 	}
 
 	return status.Error(codes.Unknown, errMsg)
+}
+
+func generateCacheKeyTender(filter models.TenderFilter) string {
+	filterBytes, _ := json.Marshal(filter)
+
+	hash := md5.Sum(filterBytes)
+
+	return fmt.Sprintf("tender_list_%x", hash)
+}
+
+func generateCacheKeyBid(filter models.BidFilter) string {
+	filterBytes, _ := json.Marshal(filter)
+
+	hash := md5.Sum(filterBytes)
+
+	return fmt.Sprintf("bid_list_%x", hash)
 }

@@ -214,3 +214,52 @@ func (h *Handler) deleteTender(c *gin.Context) {
 		Message: "Tender deleted successfully",
 	})
 }
+
+// @Description Get User Tenders
+// @Summary Get User Tenders
+// @Tags Tender
+// @Accept json
+// @Produce json
+// @Param id path string true "user id"
+// @Param page query string true "page" Default(1)
+// @Param limit query string true "limit" Default(10)
+// @Success 200 {object} []models.Tender
+// @Failure 400,401,404,500 {object} ErrorResponse
+// @Router /api/users/{id}/tenders [get]
+// @Security ApiKeyAuth
+func (h *Handler) getUserTenders(c *gin.Context) {
+	pagination, err := listPagination(c)
+	if err != nil {
+		errorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId, err := getUUIDParam(c, "id")
+	if err != nil {
+		errorResponse(c, http.StatusNotFound, errors.New("error: User not found"))
+		return
+	}
+
+	userInfo, err := getUserInfo(c)
+	if err != nil {
+		errorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	if userInfo.Id != userId {
+		errorResponse(c, http.StatusForbidden, errors.New("access denied"))
+		return
+	}
+
+	var tenderFilter models.TenderFilter
+	tenderFilter.Limit = pagination.Limit
+	tenderFilter.Offset = pagination.Offset
+	tenderFilter.ClientId = userId
+
+	bids, _, err := h.service.Tender.GetTenders(tenderFilter)
+	if err != nil {
+		fromError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, bids)
+}

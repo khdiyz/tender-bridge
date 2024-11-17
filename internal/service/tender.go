@@ -49,7 +49,7 @@ func (s *tenderService) CreateTender(request models.CreateTender) (uuid.UUID, er
 	}
 
 	go func() {
-		if err := s.cache.Delete("tender_list"); err != nil {
+		if err := s.cache.DeletePattern("tender_list*"); err != nil {
 			s.logger.Error(err)
 		}
 	}()
@@ -58,13 +58,13 @@ func (s *tenderService) CreateTender(request models.CreateTender) (uuid.UUID, er
 }
 
 func (s *tenderService) GetTenders(filter models.TenderFilter) ([]models.Tender, int, error) {
-	// cacheKey := "tender_list"
-	// var tenders []models.Tender
+	cacheKey := generateCacheKeyTender(filter)
+	var tenders []models.Tender
 
-	// if err := s.cache.Get(cacheKey, &tenders); err == nil {
-	// 	s.logger.Info("get tenders from cache")
-	// 	return tenders, 0, nil
-	// }
+	if err := s.cache.Get(cacheKey, &tenders); err == nil {
+		s.logger.Info("get tenders from cache")
+		return tenders, 0, nil
+	}
 
 	tenders, total, err := s.repo.Tender.GetList(filter)
 	if err != nil {
@@ -90,11 +90,11 @@ func (s *tenderService) GetTenders(filter models.TenderFilter) ([]models.Tender,
 		tenders[i].Client = clientsMap[tenders[i].ClientId]
 	}
 
-	// go func() {
-	// 	if err := s.cache.Set(cacheKey, tenders, 10*time.Minute); err != nil {
-	// 		s.logger.Error(err)
-	// 	}
-	// }()
+	go func() {
+		if err := s.cache.Set(cacheKey, tenders, 10*time.Minute); err != nil {
+			s.logger.Error(err)
+		}
+	}()
 
 	return tenders, total, nil
 }
@@ -122,6 +122,12 @@ func (s *tenderService) UpdateTender(request models.UpdateTender) error {
 		return serviceError(err, codes.Internal)
 	}
 
+	go func() {
+		if err := s.cache.DeletePattern("tender_list*"); err != nil {
+			s.logger.Error(err)
+		}
+	}()
+
 	return nil
 }
 
@@ -136,6 +142,12 @@ func (s *tenderService) DeleteTender(id uuid.UUID) error {
 	if err := s.repo.Tender.Delete(id); err != nil {
 		return serviceError(err, codes.Internal)
 	}
+
+	go func() {
+		if err := s.cache.DeletePattern("tender_list*"); err != nil {
+			s.logger.Error(err)
+		}
+	}()
 
 	return nil
 }
@@ -162,6 +174,12 @@ func (s *tenderService) UpdateTenderStatus(request models.UpdateTenderStatus) er
 	}); err != nil {
 		return serviceError(err, codes.Internal)
 	}
+
+	go func() {
+		if err := s.cache.DeletePattern("tender_list*"); err != nil {
+			s.logger.Error(err)
+		}
+	}()
 
 	return nil
 }

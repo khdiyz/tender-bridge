@@ -16,3 +16,6 @@ run:
 	make migrate
 	# Now bring up all services
 	docker-compose up --build
+
+swag:
+	swag init -g cmd/app/main.go

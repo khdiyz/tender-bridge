@@ -7,7 +7,8 @@ import (
 type Bid struct {
 	Id           uuid.UUID `json:"id"`
 	ContractorId uuid.UUID `json:"contractor_id"`
-	TenderId     uuid.UUID `json:"tender_id"`
+	TenderId     uuid.UUID `json:"-"`
+	Tender       Tender    `json:"tender"`
 	Price        int64     `json:"price"`
 	DeliveryTime int       `json:"delivery_time"`
 	Comment      string    `json:"comments"`

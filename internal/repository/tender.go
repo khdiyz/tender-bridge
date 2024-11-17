@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type tenderRepo struct {
@@ -81,6 +82,11 @@ func (r *tenderRepo) GetList(filter models.TenderFilter) ([]models.Tender, int, 
 	if filter.Search != "" {
 		conditions = append(conditions, "(title || description) ILIKE :search")
 		params["search"] = "%" + filter.Search + "%"
+	}
+
+	if filter.ClientId != uuid.Nil {
+		conditions = append(conditions, "client_id = :client_id")
+		params["client_id"] = filter.ClientId
 	}
 
 	// Add WHERE clause if conditions exist
@@ -235,4 +241,48 @@ func (r *tenderRepo) Delete(id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (r *tenderRepo) GetByIds(ids []uuid.UUID) ([]models.Tender, error) {
+	tenders := []models.Tender{}
+
+	query := `
+	SELECT 
+		id, 
+		client_id,
+		title,
+		description,
+		deadline,
+		budget,
+		file,
+		status 
+	FROM tenders WHERE id = ANY($1);`
+
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tender models.Tender
+		if err = rows.Scan(
+			&tender.Id,
+			&tender.ClientId,
+			&tender.Title,
+			&tender.Description,
+			&tender.Deadline,
+			&tender.Budget,
+			&tender.File,
+			&tender.Status,
+		); err != nil {
+			r.logger.Error(err)
+			return nil, err
+		}
+
+		tenders = append(tenders, tender)
+	}
+
+	return tenders, nil
 }

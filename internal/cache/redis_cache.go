@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -40,4 +41,18 @@ func (c *RedisCache) Set(key string, value any, ttl time.Duration) error {
 
 func (c *RedisCache) Delete(key string) error {
 	return c.client.Del(c.ctx, key).Err()
+}
+
+func (c *RedisCache) DeletePattern(pattern string) error {
+	iter := c.client.Scan(c.ctx, 0, pattern, 0).Iterator()
+	for iter.Next(c.ctx) {
+		if err := c.client.Del(c.ctx, iter.Val()).Err(); err != nil {
+			return fmt.Errorf("failed to delete key %s: %w", iter.Val(), err)
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return fmt.Errorf("failed to iterate keys with pattern %s: %w", pattern, err)
+	}
+
+	return nil
 }

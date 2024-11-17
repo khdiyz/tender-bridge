@@ -39,6 +39,7 @@ type Tender interface {
 	GetById(id uuid.UUID) (models.Tender, error)
 	Update(request models.UpdateTender) error
 	Delete(id uuid.UUID) error
+	GetByIds(ids []uuid.UUID) ([]models.Tender, error)
 }
 
 type Bid interface {

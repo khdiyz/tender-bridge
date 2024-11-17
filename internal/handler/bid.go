@@ -232,3 +232,52 @@ func (h *Handler) deleteContractorBid(c *gin.Context) {
 		Message: "Bid deleted successfully",
 	})
 }
+
+// @Description Get User Bids
+// @Summary Get User Bids
+// @Tags Bid
+// @Accept json
+// @Produce json
+// @Param id path string true "user id"
+// @Param page query string true "page" Default(1)
+// @Param limit query string true "limit" Default(10)
+// @Success 200 {object} []models.Bid
+// @Failure 400,401,404,500 {object} ErrorResponse
+// @Router /api/users/{id}/bids [get]
+// @Security ApiKeyAuth
+func (h *Handler) getUserBids(c *gin.Context) {
+	pagination, err := listPagination(c)
+	if err != nil {
+		errorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userId, err := getUUIDParam(c, "id")
+	if err != nil {
+		errorResponse(c, http.StatusNotFound, errors.New("error: User not found"))
+		return
+	}
+
+	userInfo, err := getUserInfo(c)
+	if err != nil {
+		errorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	if userInfo.Id != userId {
+		errorResponse(c, http.StatusForbidden, errors.New("access denied"))
+		return
+	}
+
+	var bidFilter models.BidFilter
+	bidFilter.Limit = pagination.Limit
+	bidFilter.Offset = pagination.Offset
+	bidFilter.ContractorId = userId
+
+	bids, _, err := h.service.Bid.GetBids(bidFilter)
+	if err != nil {
+		fromError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, bids)
+}

@@ -23,7 +23,7 @@ func NewService(repos *repository.Repository, cache *cache.RedisCache, cfg *conf
 		Authorization: NewAuthService(repos, loggers, cfg),
 		User:          NewUserService(repos, loggers),
 		Tender:        NewTenderService(repos, cache, loggers),
-		Bid:           NewBidService(repos, loggers),
+		Bid:           NewBidService(repos, cache, loggers),
 	}
 }
 

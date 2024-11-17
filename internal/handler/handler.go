@@ -77,6 +77,12 @@ func (h *Handler) setupClientRoutes(api *gin.RouterGroup) {
 		clientTenders.GET("/:id/bids", h.getClientTenderBids)
 		clientTenders.POST("/:id/award/:bidId", h.awardBid)
 	}
+
+	users := api.Group("/users")
+	{
+		users.GET("/:id/tenders", h.getUserTenders)
+		users.GET("/:id/bids", h.getUserBids)
+	}
 }
 
 func (h *Handler) setupContractorRoutes(api *gin.RouterGroup) {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"tender-bridge/config"
+	"tender-bridge/internal/cache"
 	"tender-bridge/internal/models"
 	"tender-bridge/internal/repository"
 	"tender-bridge/internal/ws"
@@ -20,12 +21,14 @@ var (
 
 type bidService struct {
 	repo   *repository.Repository
+	cache  *cache.RedisCache
 	logger *logger.Logger
 }
 
-func NewBidService(repo *repository.Repository, logger *logger.Logger) *bidService {
+func NewBidService(repo *repository.Repository, cache *cache.RedisCache, logger *logger.Logger) *bidService {
 	return &bidService{
 		repo:   repo,
+		cache:  cache,
 		logger: logger,
 	}
 }
@@ -64,6 +67,25 @@ func (s *bidService) GetBids(filter models.BidFilter) ([]models.Bid, int, error)
 	bids, total, err := s.repo.Bid.GetList(filter)
 	if err != nil {
 		return nil, 0, serviceError(err, codes.Internal)
+	}
+
+	tenderIds := make([]uuid.UUID, len(bids))
+	for i := range bids {
+		tenderIds[i] = bids[i].TenderId
+	}
+
+	tenders, err := s.repo.Tender.GetByIds(tenderIds)
+	if err != nil {
+		return nil, 0, serviceError(err, codes.Internal)
+	}
+
+	tendersMap := make(map[uuid.UUID]models.Tender, len(tenders))
+	for i := range tenders {
+		tendersMap[tenders[i].Id] = tenders[i]
+	}
+
+	for i := range bids {
+		bids[i].Tender = tendersMap[bids[i].TenderId]
 	}
 
 	return bids, total, nil
