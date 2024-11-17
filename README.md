@@ -79,3 +79,5 @@ Environment variables are configured in the `docker-compose.yml` file. Key varia
 
 ---
 
+## All passed the test
+![image_2024-11-17_13-28-44](https://github.com/user-attachments/assets/59f1c6ec-ca6d-4b54-903c-635dd64acd53)
